@@ -1,0 +1,135 @@
+/* .image-editor{
+    border-radius: 10px ;
+    border: 4px solid white;
+    position: relative;
+} */
+#background-editor-box{
+    
+    background-color: transparent;
+    position: relative;
+    z-index: 1;
+    border-radius: 10px ;    
+}
+#border-editor-box{
+    
+    background-color: transparent;
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    z-index: 2;
+    
+
+}
+#image-editor-box{
+    
+    background-color: transparent;
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    z-index: 3
+}
+#download-box{
+    
+    background-color: transparent;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    z-index: 0;
+}
+
+.bg-filters{
+    position: absolute;
+    top: 300px;
+    left: 550px;
+    height: 300px;
+    width: 300px;
+}
+
+.border-filters{
+    position: relative;
+    top: 300px;
+    left: 550px;
+}
+input[type=range]{
+    
+    color: #008080;   
+    
+    --thumb-height: 1.125em;
+	--track-height: 0.125em;
+	--track-color: rgba(134, 226, 188, 0.507);
+	--brightness-hover: 180%;
+	--brightness-down: 80%;
+	--clip-edges: 0.125em;
+
+    position: relative;
+    overflow: hidden;
+    background: #fff0;
+
+}
+input[type=range]:active {
+    cursor: grabbing;
+}
+input[type="range"]:disabled {
+	filter: grayscale(1);
+	opacity: 0.3;
+	cursor: not-allowed;
+}
+input[type=range],
+input[type=range]::-webkit-slider-thumb,
+input[type=range]::-webkit-slider-runnable-track {
+    appearance: none;
+    transition: all ease 100ms;
+    height: var(--thumb-height);
+}
+input[type=range]::-webkit-slider-thumb,
+input[type=range]::-webkit-slider-runnable-track {
+    position: relative;
+}
+input[type=range]::-webkit-slider-thumb{
+    --box-fill: calc(-100vmax - var(--thumb-height)) 0 0 100vmax currentColor;
+    --clip-top: calc((var(--thumb-height) - var(--track-height)) * 0.5 - 0.5px);
+	--clip-bottom: calc(var(--thumb-height) - var(--clip-top));
+	--clip-further: calc(100% + 1px);
+
+
+    width: var(--thumb-height);
+    background: linear-gradient(currentColor 0 0) scroll no-repeat left center / 50% calc(var(--track-height) + 1px);
+    background-color: currentColor;
+    border-radius: var(--thumb-height);
+    box-shadow: var(--box-fill);
+    filter: brightness(100%);
+    clip-path: polygon(
+		100% -1px,
+		var(--clip-edges) -1px,
+		0 var(--clip-top),
+		-100vmax var(--clip-top),
+		-100vmax var(--clip-bottom),
+		0 var(--clip-bottom),
+		var(--clip-edges) 100%,
+		var(--clip-further) var(--clip-further)
+	);
+
+    
+}
+input[type=range]:hover::-webkit-slider-thumb {
+    filter: brightness(var(--brightness-hover));
+    cursor: grab
+}
+input[type=range]:disabled::-webkit-slider-thumb {
+    filter: brightness(var(--brightness-hover));
+    cursor: not-allowed
+}
+input[type=range]:active::-webkit-slider-thumb {
+    filter: brightness(var(--brightness-downS));
+    cursor: grabbing
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(var(--track-color) 0 0) scroll no-repeat center /
+		100% calc(var(--track-height) + 1px);
+}
+
+
+
+
+

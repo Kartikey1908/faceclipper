@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import RotateImage from '../assets/rotateIcon.png'
+import { ColorPicker, useColor } from 'react-color-palette'
+import "react-color-palette/css";
+
 const ROTATION_BUTTON_RADIUS = 20
+const SCALING_BUTTON_RADIUS = 10
 
 
 const OnlyCanvas = () => {
@@ -13,12 +17,14 @@ const OnlyCanvas = () => {
     const [ctx, setCtx] = useState(null);
     const [outerCanvas, setOuterCanvas] = useState(null)
     const [outerCtx, setOuterCtx] = useState(null);
-    const [clicked, setClicked] = useState(false);
+    const [clicked, setClicked] = useState("");
     const [rotation, setRotation] = useState(0);
     const [scale, setScale] = useState(1);
     const [buttonPosition, setButtonPosition] = useState({x : 0, y: 0});
     const [imagePosition, setImagePosition] = useState({x : 0, y: 0});
+    const [scalingButtonPosition, setScalingButtonPosition] = useState({x : 0, y : 0});
     const oldPoints = useRef([]);
+    const [color, setColor] = useColor('123123');
 
 
     const handleFileChange = (e) => {
@@ -64,7 +70,7 @@ const OnlyCanvas = () => {
             : canvas.toDataURL('image/jpeg');
     }
 
-    const drawImageOnCanvas = async(rotation = 0, scale = 1) => {
+    const drawImageOnCanvas = async(rotation = 0, scale = 1, color="#FF0000") => {
 
         // ctx.clearRect(0, 0, canvas.height, canvas.width);
         const image = await createImage(previewImage);
@@ -73,50 +79,108 @@ const OnlyCanvas = () => {
         canvas.height = safeArea;
         canvas.width = safeArea;
 
-        setImagePosition({x: safeArea / 2, y:safeArea / 2});
+        outerCanvas.height = safeArea;
+        outerCanvas.width = safeArea
 
-        ctx.fillStyle = "#FF0000";
+        setImagePosition({x: safeArea / 2, y:safeArea / 2, width: image.width, height : image.height});
+
+        ctx.fillStyle = color;
         ctx.fillRect(0, 0, safeArea, safeArea);
-        ctx.scale(scale, scale);
+        
         ctx.translate(
             (safeArea / 2),
             (safeArea / 2)
         );
         ctx.rotate(getRadianAngle(rotation));
         ctx.translate(
-            -(image.width / 2),
-            -(image.height / 2)
-        );    
+            -(image.width / 2) * scale,
+            -(image.height / 2) * scale
+        ); 
+         
+        // ctx.drawImage(image, 
+        //     0, 0,
+        // );         
 
         ctx.drawImage(image, 
-            0, 
-            0
+            0, 0, image.width, image.height,
+            0, 0, image.width * scale, image.height * scale
         );
 
-        ctx.translate(
-            image.width / 2, 
-            image.height + 30,
+        outerCtx.translate(
+            (safeArea / 2),
+            (safeArea / 2)
         )
-        const x = safeArea / 2 + (image.height / 2 + 30) * Math.sin(getRadianAngle(-rotation));
-        const y = safeArea / 2 + (image.height / 2 + 30) * Math.cos(getRadianAngle(rotation));
+        outerCtx.rotate(getRadianAngle(rotation));
+        outerCtx.translate(
+            0, 
+            image.height / 2 * scale + 30,
+        )
+
+
+        // ctx.translate(
+        //     image.width / 2, 
+        //     image.height + 30,
+        // )
+        const x = safeArea / 2 + ((image.height / 2) * scale + 30) * Math.sin(getRadianAngle(-rotation));
+        const y = safeArea / 2 + ((image.height / 2) * scale + 30) * Math.cos(getRadianAngle(rotation));
         // console.log("Position of button" , x, y);
         setButtonPosition({x: x, y, y});
         drawRotationButton();
 
+       
+        
+        
+
+    }
+
+    const drawScalingButton = () => {
+        outerCtx.translate(
+            (imagePosition.width / 2) * scale ,
+             - 30,
+        )
+        const normalAngle = Math.atan2(imagePosition.width / 2 * scale, imagePosition.height / 2 * scale);
+        const newAngle = getRadianAngle(-rotation) + normalAngle;
+        const safeArea = Math.sqrt(Math.pow(imagePosition.width, 2) + Math.pow(imagePosition.height, 2));
+
+        const x = safeArea / 2 + (safeArea / 2 * scale) * Math.sin(newAngle);
+        const y = safeArea / 2 + (safeArea / 2 * scale) * Math.cos(newAngle);
+
+        console.log("Scaling Button coordinates ", x, y);
+        setScalingButtonPosition({x : x, y : y});
+
+        
+        outerCtx.beginPath();
+        outerCtx.strokeStyle = "#2066F3"
+        outerCtx.arc(0, 0, SCALING_BUTTON_RADIUS, 0, 2 * Math.PI);
+        outerCtx.fill();
     }
 
     const drawRotationButton = () => {
         
-        ctx.imageSmoothingEnabled = true;
+        // ctx.imageSmoothingEnabled = true;
+        // const icon = new Image();
+        // icon.src = RotateImage;
+        
+        // icon.onload = function() {
+        //     ctx.fillStyle = "#2066F3"
+        //     ctx.arc(0, 0, ROTATION_BUTTON_RADIUS, 0, 2 * Math.PI);
+        //     ctx.fill()  
+        //     ctx.drawImage(icon, -10, -10, 20, 20);
+        // };
+
+        outerCtx.imageSmoothingEnabled = true;
         const icon = new Image();
         icon.src = RotateImage;
         
-        icon.onload = function() {
-            ctx.fillStyle = "#2066F3"
-            ctx.arc(0, 0, ROTATION_BUTTON_RADIUS, 0, 2 * Math.PI);
-            ctx.fill()  
-            ctx.drawImage(icon, -10, -10, 20, 20);
+        
+        icon.onload = function () {
+            outerCtx.fillStyle = "#2066F3"
+            outerCtx.arc(0, 0, ROTATION_BUTTON_RADIUS, 0, 2 * Math.PI);
+            outerCtx.fill()  
+            outerCtx.drawImage(icon, -10, -10, 20, 20);
+            drawScalingButton();
         };
+        
         
     }
 
@@ -164,16 +228,23 @@ const OnlyCanvas = () => {
         
         console.log(e);
 
-        let firstPoint = oldPoints.current.shift();
-        firstPoint = firstPoint ? firstPoint : {x: 0, y: 0}
-        const lastPoint = {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY};
-        oldPoints.current.push(lastPoint);
+       
+        if (clicked === "rotation") {
+            let firstPoint = oldPoints.current.shift();
+            firstPoint = firstPoint ? firstPoint : {x: 0, y: 0}
+            const lastPoint = {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY};
+            oldPoints.current.push(lastPoint);
 
-        const angle = getAngle(imagePosition.x, imagePosition.y, firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y)
-        console.log(rotation + angle * 31);
-        console.log(firstPoint, lastPoint)
+            const angle = getAngle(imagePosition.x, imagePosition.y, firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y)
+            console.log(rotation + angle * 31);
+            console.log(firstPoint, lastPoint)
 
-        setRotation(rotation => (rotation + angle * 59) % 360);
+            setRotation(rotation => (rotation + angle * 59) % 360);
+        }
+        else if (clicked === "scaling") {
+            setScale(scale => scale + e.movementX * 0.001)
+        }
+        
 
 
 
@@ -181,9 +252,10 @@ const OnlyCanvas = () => {
 
      
         
-        drawImageOnCanvas(rotation);
+        drawImageOnCanvas(rotation, scale, color.hex);
 
     }
+
 
 
 
@@ -215,24 +287,43 @@ const OnlyCanvas = () => {
           
             
            
-            <canvas ref={canvasRef}
-                onMouseDown={(e) => {
-                    const xPos = e.nativeEvent.offsetX;
-                    const yPos = e.nativeEvent.offsetY;
-                    if (xPos > buttonPosition.x - ROTATION_BUTTON_RADIUS && xPos < buttonPosition.x + ROTATION_BUTTON_RADIUS && 
-                        yPos > buttonPosition.y - ROTATION_BUTTON_RADIUS && yPos < buttonPosition.y + ROTATION_BUTTON_RADIUS
-                    )
-                    {
-                        oldPoints.current.push({x: xPos, y: yPos});
-                        setClicked(true);
-                    }
-                }}
-                onMouseMove={handleMouseMove}
-               
-            >
-                <canvas ref={outerCanvasRef}></canvas>
-            </canvas>
+           <div className='relative z-0'>
+                <canvas ref={canvasRef}
+                    className='relative z-[5]'
+                    
+                >
+                    
+                </canvas>
+                <canvas ref={outerCanvasRef} className='absolute top-0 left-0 h-full w-full z-[100]'
+                    onMouseDown={(e) => {
+                        
+                        const xPos = e.nativeEvent.offsetX;
+                        const yPos = e.nativeEvent.offsetY;
+                        // console.log("Clicked at" ,xPos, yPos);
+                        if (xPos > buttonPosition.x - ROTATION_BUTTON_RADIUS && xPos < buttonPosition.x + ROTATION_BUTTON_RADIUS && 
+                            yPos > buttonPosition.y - ROTATION_BUTTON_RADIUS && yPos < buttonPosition.y + ROTATION_BUTTON_RADIUS
+                        )
+                        {
+                            oldPoints.current.push({x: xPos, y: yPos});
+                            setClicked("rotation");
+                        }
+                        else if (xPos > scalingButtonPosition.x - SCALING_BUTTON_RADIUS && xPos < scalingButtonPosition.x + SCALING_BUTTON_RADIUS &&
+                                 yPos > scalingButtonPosition.y - SCALING_BUTTON_RADIUS && yPos < scalingButtonPosition.y + SCALING_BUTTON_RADIUS
+                        )
+                        {
+                            setClicked("scaling");
+                        }
+                    }}
+                    onMouseMove={handleMouseMove}
+                >
+
+                </canvas>
+           </div>
         
+           <div className='w-[500px] mt-10 self-center'>
+            <ColorPicker hideInput={["hsv"]} color={color} onChange={setColor} />
+            {/* <SketchPicker/> */}
+        </div>
           
 
         </div>
